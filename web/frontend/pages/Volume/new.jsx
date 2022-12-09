@@ -2,8 +2,8 @@ import { useForm, useField } from "@shopify/react-form";
 import { CurrencyCode } from "@shopify/react-i18n";
 import { Redirect } from "@shopify/app-bridge/actions";
 import { useAppBridge } from "@shopify/app-bridge-react";
-import {ButtonGroup, Button} from '@shopify/polaris';
-import React,{useState} from "react";
+import { ButtonGroup, Button } from "@shopify/polaris";
+import React, { useState, useCallback } from "react";
 
 import ApplyTo from "../../custom_component/ApplyTo";
 import {
@@ -28,7 +28,7 @@ import {
   PageActions,
 } from "@shopify/polaris";
 
-import metafields from '../../metafields'
+import metafields from "../../metafields";
 import { useAuthenticatedFetch } from "../../hooks";
 const todaysDate = new Date();
 const FUNCTION_ID = "01GJ2V7NVEMC02VKBHEVYT364G";
@@ -36,8 +36,8 @@ export default function VolumeNew() {
   const app = useAppBridge();
   const redirect = Redirect.create(app);
   const currencyCode = CurrencyCode.Cad;
-  const [fieldChange, setFieldChange]=useState(true);
-  // console.log(fieldChange);
+  // const [fieldChange, setFieldChange]=useState(true);
+  const [isFirstButtonActive, setIsFirstButtonActive] = useState(true);
   const authenticatedFetch = useAuthenticatedFetch();
   const {
     fields: {
@@ -81,11 +81,11 @@ export default function VolumeNew() {
       configuration: {
         // Add quantity and percentage configuration
         quantity: useField("1"),
-        percentage: useField("0"),
-        value:useField("0.00"),
+        percentage: useField(""),
+        value: useField(""),
       },
     },
-    onSubmit: async (form) => {
+    onSubmit: async form => {
       console.log(form, "Form data");
       const discount = {
         functionId: FUNCTION_ID,
@@ -96,7 +96,7 @@ export default function VolumeNew() {
           {
             namespace: metafields.namespace,
             key: metafields.key,
-            type: 'json',
+            type: "json",
             value: JSON.stringify({
               quantity: parseInt(form.configuration.quantity),
               percentage: parseFloat(form.configuration.percentage),
@@ -105,8 +105,8 @@ export default function VolumeNew() {
         ],
       };
 
-      console.log(discount,"discount data");
-      
+      console.log(discount, "discount data");
+
       let response;
       if (form.discountMethod === DiscountMethod.Automatic) {
         response = await authenticatedFetch("/api/discounts/automatic", {
@@ -135,7 +135,7 @@ export default function VolumeNew() {
 
       const {
         errors, // errors like missing scope access
-        data
+        data,
       } = await response.json();
       const remoteErrors = errors || data?.discountCreate?.userErrors;
 
@@ -151,6 +151,15 @@ export default function VolumeNew() {
     },
   });
 
+  const handleFirstButtonClick = useCallback(() => {
+    if (isFirstButtonActive) return;
+    setIsFirstButtonActive(true);
+  }, [isFirstButtonActive]);
+
+  const handleSecondButtonClick = useCallback(() => {
+    if (!isFirstButtonActive) return;
+    setIsFirstButtonActive(false);
+  }, [isFirstButtonActive]);
 
   const errorBanner =
     submitErrors.length > 0 ? (
@@ -211,26 +220,36 @@ export default function VolumeNew() {
             </Card> */}
             <Card title="Value">
               <Card.Section>
-                <Stack> 
+                <Stack>
                   <ButtonGroup segmented>
-                    <Button onClick={()=>{setFieldChange(true)}}>Percentage</Button>
-                  <Button onClick={()=>setFieldChange(false)}>FixedAmount</Button>
+                    <Button
+                      pressed={isFirstButtonActive}
+                      onClick={handleFirstButtonClick}
+                    >
+                      Percentage
+                    </Button>
+                    <Button
+                      pressed={!isFirstButtonActive}
+                      onClick={handleSecondButtonClick}
+                    >
+                      FixedAmount
+                    </Button>
                   </ButtonGroup>
-                 {
-                    fieldChange
-                 ? <TextField
-            
-                    {...configuration.percentage}
+                  {isFirstButtonActive ? (
+                    <TextField
+                      {...configuration.percentage}
                       suffix="%"
-                    /> : <TextField
-                    {...configuration.value}
-                    prefix=""
-                  />
-                 }
-                 
-             
+                      placeholder="0"
+                    />
+                  ) : (
+                    <TextField
+                      {...configuration.value}
+                      prefix="$"
+                      placeholder="0.00"
+                    />
+                  )}
                 </Stack>
-                <hr/>
+                <hr />
                 <ApplyTo />
               </Card.Section>
             </Card>

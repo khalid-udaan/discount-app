@@ -1,5 +1,4 @@
 import React, { useCallback, useState } from "react";
-import { useForm, useField } from "@shopify/react-form";
 import {
   Button,
   ChoiceList,
@@ -9,124 +8,192 @@ import {
   List,
   Checkbox,
 } from "@shopify/polaris";
+const ProductList = ["Apple", "Shirt", "Pen"];
 
-const ProductList = ["KJJDJJD", "kkksd", "ghjkl", "dfhjk"];
-
-const CollectionList = ["KJJDJJD", "kkksd", "ghjkl", "dfhjk"];
+const Collections = ["Bout", "Aroma", "Lenovo", "Oppo", "Realme"];
 
 const ApplyTo = () => {
-  const [selected, setSelected] = useState(["Specific collections"]);
-  // const [input, setInput] = useState("");
-  // const [collections, setCollections]=useState([]);
-  const [Products, setProducts] = useState(ProductList);
-  const [active, setActive] = useState(true);
+  const [selected, setSelected] = useState(["COLLECTIONS"]);
+  const [Products, setProducts] = useState([]);
+  const [active, setActive] = useState(false);
   const [checked, setChecked] = useState(false);
-  const [value, setValue] = useState('Jaded Pixel');
+  const [collections, SetCollection] = useState(Collections);
+  const [change, setChange] = useState(true);
+  const [loading, setLoading]=useState(false);
+  const [add, setAdd] = useState([]);
+  const handleChangeBox =(e)=> {
 
-  // console.log(Products);
- const{
-  fields:{
-    configuration,
+    setChecked(newChecked);
   }
- }=useForm({
-  fields:{
-    configuration: {
-      // Add quantity and percentage configuration
-      value:useField(""),
-    },
-  }
- })
-
-  const handleChangeBox = useCallback(
-    (newChecked) => setChecked(newChecked),
-    []);
 
   const handleChangeModel = useCallback(() => setActive(!active), [active]);
   const activator = <Button onClick={handleChangeModel}>Browser</Button>;
 
-  //  console.log(input, "input box for apply")
-  // console.log(selected, "selected");
-  const handleInputChange = (event) => {
-    setInput(event.target.value);
-    // console.log(event.target.value);
+  const handleChange = value => {
+    if (value[0] == "COLLECTIONS") {
+      setSelected(value);
+      setChange(true);
+      SetCollection(Collections);
+    } 
+    else 
+    {
+      setSelected(value);
+      setChange(false);
+      setProducts(ProductList);
+    }
   };
 
-  const handleChange = useCallback((value) => setSelected(value), []);
-
-  const handlerSearch = (e) => {
+  const handlerSearch = e => {
     if (e.target.value === "") {
       setProducts(ProductList);
       return;
+    } else {
+      const FilterProductList = Products.filter(item =>
+        item.toLowerCase().includes(e.target.value.toLowerCase())
+      );
+      setProducts(FilterProductList);
     }
-
-    const FilterProductList = Products.filter(
-      (item) => item.toLowerCase().indexOf(e.target.Value.toLowerCase()) !== -1
-    );
-    setProducts(FilterProductList);
   };
 
-  // console.log(FilterProductList);
+  const handlerSearchSecond = e => {
+    if (e.target.value === "") {
+      SetCollection(Collections);
+      return;
+    } else {
+      const FilterProductList = Collections.filter(item =>
+        item.toLowerCase().includes(e.target.value.toLowerCase())
+      );
+      SetCollection(FilterProductList);
+    }
+  };
 
+  const handleChangeCheckbox = (e) => {
+
+    const { value, checked } = e.target;
+    const { languages } = userinfo;
+      
+    console.log(`${value} is ${checked}`);
+    if (checked) {
+      setUserInfo({
+        languages: [...languages, value],
+        response: [...languages, value],
+      });
+    }
+
+    else {
+      setUserInfo({
+        languages: languages.filter((e) => e !== value),
+        response: languages.filter((e) => e !== value),
+      });
+    }
+  };
   return (
     <>
       <ChoiceList
         title="APPLY TO"
         choices={[
-          { label: "Specific collectionsn", value: "Specific collections" },
-          { label: "Specific products", value: "Specific products" },
+          { label: "Specific collections", value: "COLLECTIONS" },
+          { label: "Specific products", value: "PRODUCTS" },
         ]}
         selected={selected}
         onChange={handleChange}
       />
       <Stack>
-        <TextField type="text" 
-        
-        {...configuration.value}
-        
-        />
+        <TextField type="text" onChange={handlerSearch} value={""} />
         <div>
-          <Modal
-            activator={activator}
-            open={active}
-            onClose={handleChangeModel}
-            title="Add collections"
-            primaryAction={{
-              content: "Add",
-              onAction: handleChangeModel,
-            }}
-            secondaryActions={[
-              {
-                content: "Cencle",
+          {change ? (
+            <Modal
+              activator={activator}
+              open={active}
+              onClose={handleChangeModel}
+              title="Add collections"
+              primaryAction={{
+                content: "Add",
                 onAction: handleChangeModel,
-              },
-            ]}
-          >
-            <TextField type="text" onChange={handlerSearch} 
-            {...configuration.value}
-            />
-            <Modal.Section>
-              <Stack>
-                <List>
-                  {
-                    Products.map((item, index) => {
-                      return (
-                        <List.Item key={index}>
-                          <Checkbox
-                            label={item}
-                            checked={checked}
-                            onChange={handleChangeBox}
-                          />
-                        </List.Item>
-                      );
-                    })}
-                </List>
-              </Stack>
-            </Modal.Section>
-          </Modal>
+              }}
+              secondaryActions={[
+                {
+                  content: "Cancel",
+                  onAction: handleChangeModel,
+                },
+              ]}
+            >
+              <input
+                type="text"
+                onChange={handlerSearchSecond}
+                style={{ width: "90%", padding: "10px", marginLeft: "30px" }}
+              />
+              <Modal.Section>
+                <Stack>
+                  <form>
+                    <List>
+                      {collections &&
+                        collections.map((item, index) => {
+                          return (
+                            <List.Item key={index}>
+                              <Checkbox
+                                label={item}
+                                value={item}
+                                name={item}
+                                onChange={handleChangeBox}
+                              />
+                            </List.Item>
+                          );
+                        })}
+                    </List>
+                  </form>
+                </Stack>
+              </Modal.Section>
+            </Modal>
+          ) : (
+            <Modal
+              activator={activator}
+              open={active}
+              onClose={handleChangeModel}
+              title="Add Products"
+              primaryAction={{
+                content: "Add",
+                onAction: handleChangeModel,
+              }}
+              secondaryActions={[
+                {
+                  content: "Cancel",
+                  onAction: handleChangeModel,
+                },
+              ]}
+            >
+              <input
+                type="text"
+                onChange={handlerSearch}
+                style={{ width: "90%", padding: "10px", marginLeft: "30px" }}
+              />
+              <Modal.Section>
+                <Stack>
+                  <form>
+                    <List>
+                      {Products &&
+                        Products.map((item, index) => {
+                          return (
+                            <List.Item key={index}>
+                              <Checkbox
+                                label={item}
+                                value={item}
+                                name={item}
+                                checked={checked}
+                                onChange={handleChangeBox}
+                              />
+                            </List.Item>
+                          );
+                        })}
+                    </List>
+                  </form>
+                </Stack>
+              </Modal.Section>
+            </Modal>
+          )}
         </div>
       </Stack>
     </>
   );
 };
-
 export default ApplyTo;
