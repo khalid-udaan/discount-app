@@ -1,9 +1,7 @@
 import { Shopify } from "@shopify/shopify-api";
 import { gdprTopics } from "@shopify/shopify-api/dist/webhooks/registry.js";
-
 import ensureBilling from "../helpers/ensure-billing.js";
 import topLevelAuthRedirect from "../helpers/top-level-auth-redirect.js";
-
 export default function applyAuthMiddleware(
   app,
   { billing = { required: false } } = { billing: { required: false } }

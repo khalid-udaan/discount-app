@@ -4,8 +4,10 @@ import { Redirect } from "@shopify/app-bridge/actions";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { ButtonGroup, Button } from "@shopify/polaris";
 import React, { useState, useCallback } from "react";
+// import ApplyTo from "../../custom_component/ApplyTo";
+const ProductList = ["Apple", "Shirt", "Pen"];
 
-import ApplyTo from "../../custom_component/ApplyTo";
+const Collections = ["Bout", "Aroma", "Lenovo", "Oppo", "Realme"];
 import {
   ActiveDatesCard,
   CombinationCard,
@@ -26,6 +28,10 @@ import {
   TextField,
   Stack,
   PageActions,
+  ChoiceList,
+  Modal,
+  List,
+  Checkbox,
 } from "@shopify/polaris";
 
 import metafields from "../../metafields";
@@ -38,6 +44,79 @@ export default function VolumeNew() {
   const currencyCode = CurrencyCode.Cad;
   // const [fieldChange, setFieldChange]=useState(true);
   const [isFirstButtonActive, setIsFirstButtonActive] = useState(true);
+  // ----------------------------------  *********************  ----------------------
+
+  const [selected, setSelected] = useState(["COLLECTIONS"]);
+  const [Products, setProducts] = useState([]);
+  const [active, setActive] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const [collections, SetCollection] = useState(Collections);
+  const [change, setChange] = useState(true);
+  const [OnlyOne, setOnlyOne]=useState(false);
+  const [selectedCollection, setSelectedCollection] = useState({
+    CollectionsList: [],
+    response: [],
+  });
+
+  const handleChangeModel = useCallback(() => setActive(!active), [active]);
+  const activator = <Button onClick={handleChangeModel}>Browser</Button>;
+
+  const handleChange = value => {
+    if (value[0] == "COLLECTIONS") {
+      setSelected(value);
+      setChange(true);
+      SetCollection(Collections);
+    } else {
+      setSelected(value);
+      setChange(false);
+      setProducts(ProductList);
+    }
+  };
+
+  const handlerSearch = e => {
+    if (e.target.value === "") {
+      setProducts(ProductList);
+      return;
+    } 
+    else {
+      const FilterProductList = Products.filter(item =>
+        item.toLowerCase().includes(e.target.value.toLowerCase())
+      );
+      setProducts(FilterProductList);
+    }
+  };
+
+  const handlerSearchSecond = e => {
+    if (e.target.value === "") {
+      SetCollection(Collections);
+      return;
+    } else {
+      const FilterProductList = Collections.filter(item =>
+        item.toLowerCase().includes(e.target.value.toLowerCase())
+      );
+      SetCollection(FilterProductList);
+    }
+  };
+
+    const handleChangeCheckbox = e => {
+    const { value, checked } = e.target;
+    const { CollectionsList } = selectedCollection;
+    console.log(`${value} is ${checked}`);
+    if (checked) {
+      setChecked(checked);
+      setSelectedCollection({
+        CollectionsList: [...CollectionsList, value],
+      });
+    } else {
+      setChecked(checked);
+      setSelectedCollection({
+        CollectionsList: CollectionsList.filter(e => e !== value),
+      });
+    }
+  };
+
+  // -----------------------------------********************************------------------------------
+
   const authenticatedFetch = useAuthenticatedFetch();
   const {
     fields: {
@@ -53,6 +132,8 @@ export default function VolumeNew() {
       startDate,
       endDate,
       configuration,
+      collection,
+      products,
     },
 
     submit,
@@ -78,13 +159,15 @@ export default function VolumeNew() {
       usageOncePerCustomer: useField(false),
       startDate: useField(todaysDate),
       endDate: useField(null),
+      product:useField(),
+      collection:useState(),
       configuration: {
-        // Add quantity and percentage configuration
         quantity: useField("1"),
         percentage: useField(""),
         value: useField(""),
       },
     },
+
     onSubmit: async form => {
       console.log(form, "Form data");
       const discount = {
@@ -104,8 +187,6 @@ export default function VolumeNew() {
           },
         ],
       };
-
-      console.log(discount, "discount data");
 
       let response;
       if (form.discountMethod === DiscountMethod.Automatic) {
@@ -249,8 +330,130 @@ export default function VolumeNew() {
                     />
                   )}
                 </Stack>
-                <hr />
-                <ApplyTo />
+                <ChoiceList
+                  title="APPLY TO"
+                  choices={[
+                    { label: "Specific collections", value: "COLLECTIONS" },
+                    { label: "Specific products", value: "PRODUCTS" },
+                  ]}
+                  selected={selected}
+                  onChange={handleChange}
+                />
+                <Stack>
+                  {
+                    change?(
+                      <TextField  
+                  {...configuration.value}
+                  />
+                    ):(
+                      <TextField  
+                  {...configuration.value}
+                  />
+                    )
+                  }
+                  
+                  <div>
+                    {change ? (
+                      <Modal
+                        activator={activator}
+                        open={active}
+                        onClose={handleChangeModel}
+                        title="Add collections"
+                        primaryAction={{
+                          content: "Add",
+                          onAction: handleChangeModel,
+                        }}
+                        secondaryActions={[
+                          {
+                            content: "Cancel",
+                            onAction: handleChangeModel,
+                          },
+                        ]}
+                      >
+                        <input
+                          type="text"
+                          onChange={handlerSearchSecond}
+                          style={{
+                            width: "90%",
+                            padding: "10px",
+                            marginLeft: "30px",
+                          }}
+                        />
+                        <Modal.Section>
+                          <Stack>
+                            <form>
+                              <List>
+                                {collections &&
+                                  collections.map((item, index) => {
+                                    return (
+                                      <List.Item key={index}>
+                                        <input
+                                          type="checkbox"
+                                          value={item}
+                                          checked={checked}
+                                          onChange={handleChangeCheckbox}
+                                        />
+                                        <label>{item}</label>
+                                      </List.Item>
+                                    );
+                                  })}
+                              </List>
+                            </form>
+                          </Stack>
+                        </Modal.Section>
+                      </Modal>
+                    ) : (
+                      <Modal
+                        activator={activator}
+                        open={active}
+                        onClose={handleChangeModel}
+                        title="Add Products"
+                        primaryAction={{
+                          content: "Add",
+                          onAction: handleChangeModel,
+                        }}
+                        secondaryActions={[
+                          {
+                            content: "Cancel",
+                            onAction: handleChangeModel,
+                          },
+                        ]}
+                      >
+                        <input
+                          type="text"
+                          onChange={handlerSearch}
+                          style={{
+                            width: "90%",
+                            padding: "10px",
+                            marginLeft: "30px",
+                          }}
+                        />
+                        <Modal.Section>
+                          <Stack>
+                            <form>
+                              <List>
+                                {Products &&
+                                  Products.map((item, index) => {
+                                    return (
+                                      <List.Item key={index}>
+                                        <Checkbox
+                                          label={item}
+                                          value={item}
+                                          name={item}
+                                          checked={checked}
+                                          // onChange={handleChangeCheckbox}
+                                        />
+                                      </List.Item>
+                                    );
+                                  })}
+                              </List>
+                            </form>
+                          </Stack>
+                        </Modal.Section>
+                      </Modal>
+                    )}
+                  </div>
+                </Stack>
               </Card.Section>
             </Card>
             {discountMethod.value === DiscountMethod.Code && (

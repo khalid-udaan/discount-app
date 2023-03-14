@@ -1,3 +1,4 @@
+import { useForm, useField } from "@shopify/react-form";
 import React, { useCallback, useState } from "react";
 import {
   Button,
@@ -6,7 +7,7 @@ import {
   TextField,
   Modal,
   List,
-  Checkbox,
+  Checkbox
 } from "@shopify/polaris";
 const ProductList = ["Apple", "Shirt", "Pen"];
 
@@ -21,10 +22,14 @@ const ApplyTo = () => {
   const [change, setChange] = useState(true);
   const [loading, setLoading]=useState(false);
   const [add, setAdd] = useState([]);
-  const handleChangeBox =(e)=> {
+  const [selectedCollection, setSelectedCollection] = useState({
+    CollectionsList: [],
+    response: [],
+  });
 
-    setChecked(newChecked);
-  }
+  // const handleChangeBox =(e)=> {
+  // }
+
 
   const handleChangeModel = useCallback(() => setActive(!active), [active]);
   const activator = <Button onClick={handleChangeModel}>Browser</Button>;
@@ -68,22 +73,20 @@ const ApplyTo = () => {
   };
 
   const handleChangeCheckbox = (e) => {
-
     const { value, checked } = e.target;
-    const { languages } = userinfo;
-      
+    const { CollectionsList } = selectedCollection;
     console.log(`${value} is ${checked}`);
     if (checked) {
-      setUserInfo({
-        languages: [...languages, value],
-        response: [...languages, value],
+    setChecked(checked);
+      setSelectedCollection({
+        CollectionsList: [...CollectionsList, value],
       });
     }
 
     else {
-      setUserInfo({
-        languages: languages.filter((e) => e !== value),
-        response: languages.filter((e) => e !== value),
+    setChecked(checked);
+      setSelectedCollection({
+        CollectionsList: CollectionsList.filter((e) => e !== value),
       });
     }
   };
@@ -131,12 +134,13 @@ const ApplyTo = () => {
                         collections.map((item, index) => {
                           return (
                             <List.Item key={index}>
-                              <Checkbox
-                                label={item}
+                              <input 
+                                type="checkbox"
                                 value={item}
-                                name={item}
-                                onChange={handleChangeBox}
+                                checked={checked}
+                                onChange={handleChangeCheckbox}
                               />
+                              <label>{item}</label>
                             </List.Item>
                           );
                         })}
